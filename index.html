@@ -1,0 +1,148 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="UTF-8">
+
+</head>
+<body>
+<div id="RetailContainer" style="height: 370px; max-width: 920px; margin: 0px auto;"></div>
+<div id="ContainerInstitution" style="height: 370px; max-width: 920px; margin: 0px auto;"></div>
+<script src="https://canvasjs.com/assets/script/jquery-1.11.1.min.js"></script>
+<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+
+<script>
+
+	const url = ${YOUR_SERVER}
+
+	var PriceInstitution = [];
+	var VolumnInstitution = [];
+	var PriceRetail = [];
+	var VolumnRetail = [];
+
+	var chartRetail = new CanvasJS.Chart("RetailContainer", {
+		theme: "light2",
+		title: {
+			text: "Retail"
+		},
+		axisX: {
+			valueFormatString: "HH:mm:ss"
+		},
+		axisY: {
+			includeZero: false
+		},
+		axisY2: {
+			includeZero: false
+		},
+		data: [
+			{
+				type: "column",
+				axisYType: "secondary",
+				color: "#bfbfbf",
+				dataPoints: VolumnRetail
+			},
+			{
+				type: "line",
+				color: "#ff8000",
+				dataPoints: PriceRetail
+			},
+
+		]
+	});
+
+	var chartInstitution = new CanvasJS.Chart("ContainerInstitution", {
+		theme: "light2",
+		title: {
+			text: "Institution"
+		},
+		axisX: {
+			valueFormatString: "HH:mm:ss"
+		},
+		axisY: {
+			includeZero: false
+		},
+		axisY2: {
+			includeZero: false
+		},
+		data: [
+			{
+				type: "column",
+				axisYType: "secondary",
+				color: "#bfbfbf",
+				dataPoints: VolumnInstitution
+			},
+			{
+				type: "line",
+				color: "#ff8000",
+				dataPoints: PriceInstitution
+			},
+
+		]
+	});
+
+	// Initial Values
+	var newDataCount = 0;
+
+	function addData(data) {
+		PriceRetail.push({x: new Date(data[0]), y: parseInt(data[1])});
+		VolumnRetail.push({x: new Date(data[0]), y: parseInt(data[2])});
+
+		PriceInstitution.push({x: new Date(data[0]), y: parseInt(data[1])});
+		VolumnInstitution.push({x: new Date(data[0]), y: parseInt(data[3])});
+
+		chartRetail.render();
+		chartInstitution.render();
+	}
+
+	function batchAddData(_data) {
+		console.log(_data)
+		_data.map( (val) => {
+			console.log(val)
+			PriceRetail.push({x: new Date(val[0]), y: parseInt(val[1])});
+			VolumnRetail.push({x: new Date(val[0]), y: parseInt(val[2])});
+
+			PriceInstitution.push({x: new Date(val[0]), y: parseInt(val[1])});
+			VolumnInstitution.push({x: new Date(val[0]), y: parseInt(val[3])});
+
+		});				
+		chartRetail.render();
+		chartInstitution.render();				
+	}
+
+
+let channel;
+
+function openChannel(){
+	channel = new WebSocket(url, "observer")
+	channel.onopen = (m) => {
+		console.log("onopen")
+	}
+
+	channel.onmessage = (m) => {
+		console.log(m)
+
+		
+		const message = JSON.parse(m.data)
+		console.log(message)
+		console.log(message.length)
+
+		if (message.length > 6){
+			const data = message.map((m) => JSON.parse(m))
+			batchAddData(data)
+		} else {
+			addData(message)	
+		}
+	}
+
+	channel.onclose = (m) => {
+		console.log(m)
+	}
+}
+
+window.onload = function() {
+	openChannel()
+
+}
+
+</script>
+</body>
+</html>
